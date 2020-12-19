@@ -1,0 +1,196 @@
+---
+# Create ton group
+- name: Create ton group
+  group:
+    name: "{{ ton_group }}"
+    state: present
+
+# Create ton user
+- name: Create ton user
+  user:
+    name: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+# Download prometheus-node-exporter
+- name: Download prometheus node exporter binary
+  become: no
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz"
+
+# Unarchive prometheus-node-exporter
+- name: Unarchive prometheus node exporter
+  become: no
+  unarchive:
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}/node_exporter"
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz"
+    dest: "/tmp"
+    remote_src: yes
+
+# Create group for prometheus-node-exporter
+- name: Create prometheus_exporter_group
+  group:
+    name: "{{ node_exporter_group }}"
+    state: present
+
+# Create user for prometheus-node-exporter
+- name: Create prometheus_exporter_user
+  user:
+    name: "{{ node_exporter_user }}"
+    groups: "{{ node_exporter_group }}"
+    create_home: no
+    shell: /bin/false
+    system: true
+
+# Put prometheus-node-exporter to work dir
+- name: Copy file with owner and permissions
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    remote_src: yes
+    owner: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    mode: "0755"
+
+# Create service
+- name: Create systemd service unit
+  template:
+    src: "prometheus-node-exporter.service.j2"
+    dest: "/etc/systemd/system/prometheus-node-exporter.service"
+  notify: reload systemctl
+
+# Check service
+- name: Ensure prometheus node exporter service is enabled and started
+  service:
+    name: "prometheus-node-exporter"
+    state: started
+    enabled: yes
+
+# Remove temporary file
+- name: Remove temporary files
+  file:
+    path: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz"
+    state: absent
+
+# Create Nginx config for prometheus-node-exporter
+- name: Create nginx proxy config
+  template:
+    src: "prometheus_node_exporter_proxy.conf.j2"
+    dest: "/etc/nginx/sites-available/prometheus_node_exporter_proxy.conf"
+  notify: reload nginx
+
+# Enable Nginx config for prometheus-node-exporter
+- name: Enable nginx proxy config
+  file:
+    src: "/etc/nginx/sites-available/prometheus_node_exporter_proxy.conf"
+    dest: "/etc/nginx/sites-enabled/prometheus_node_exporter_proxy.conf"
+    owner: "www-data"
+    group: "www-data"
+    state: link
+  notify: reload nginx
+
+# Freeton custom metrics
+- name: Create folder for custom metrics
+  file:
+    state: directory
+    path: "{{node_exporter_custom_metrics_folder}}"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# This file needs for node_watch
+- name: Create old adnl_addr file
+  file:
+    state: touch
+    path: "/var/tmp/old_adnl"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0644"
+
+# - name: Install parser
+#   apt:
+#     pkg: python3-pip
+#     state: latest
+
+# - name: Ensure pip_install_packages are installed.
+#   pip:
+#     name: config
+#     executable: pip3
+
+# # Install node_watch script
+# - name: Install node_watch
+#   template:
+#     src: node_watcher.py.j2
+#     dest: "/usr/local/sbin/node_watcher.py"
+#     owner: "{{ ton_user }}"
+#     group: "{{ ton_group }}"
+#     mode: "0755"
+
+# # Cron for node_watch
+# - name: Cronjob for watcher
+#   cron:
+#     name: "watcher script"
+#     minute: "*/1"
+#     cron_file: "node_watcher"
+#     user: "{{ton_user}}"
+#     job: "/usr/local/sbin/node_watcher.py"
+
+# Install ton_network_grab for get information about ton network
+- name: Install ton_network_grab
+  copy:
+    src: "ton_network_grab"
+    dest: "/usr/local/sbin/ton_network_grab"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Get hostname
+- name: Get hostname
+  shell:
+    cmd: "cat /etc/hostname"
+  register: hostname
+
+# Cront for ton_network_grab
+- name: Cronjob for ton_network_grab
+  cron:
+    name: "ton_network_grab script"
+    minute: "*/5"
+    cron_file: ton_network_grab
+    user: "{{ton_user}}"
+    job: "/usr/local/sbin/ton_network_grab {{ node_exporter_custom_metrics_folder }}/ton_network.prom {{ network_type }} /home/{{ ton_user }}/ton-keys/elections/{{ hostname.stdout_lines[0] }}-election-adnl-key"
+
+# Install node_diff
+- name: Install node_diff
+  template:
+    src: "node_diff.sh.j2"
+    dest: "/usr/local/sbin/node_diff.sh"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Cront for node_diff
+- name: Cronjob for node_diff
+  cron:
+    name: "node_diff script"
+    minute: "*/1"
+    cron_file: ton_node_diff
+    user: "{{ton_user}}"
+    job: "/usr/local/sbin/node_diff.sh"
+
+# Install node_balance
+- name: Install node_balance
+  template:
+    src: "node_balance.sh.j2"
+    dest: "/usr/local/sbin/node_balance.sh"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Cron for node_balance
+- name: Cronjob for node_balance
+  cron:
+    name: "node_balance script"
+    minute: "*/1"
+    cron_file: ton_node_balance
+    user: "{{ton_user}}"
+    job: "/usr/local/sbin/node_balance.sh"

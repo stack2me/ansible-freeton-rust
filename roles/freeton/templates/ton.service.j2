@@ -1,0 +1,17 @@
+[Unit]
+Description=Ton validation node
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+LimitNOFILE=1024
+ExecStart={{ install_path }}/{{ ton_src }}/ton/build/validator-engine/validator-engine  -t "30" -C /var/ton-work/etc/ton-global.config.json --db /var/ton-work/db -l /var/log/ton/node.log -d
+ExecStop=/bin/kill -HUP $MAINPID
+Restart=on-failure
+User={{ton_user}}
+Group={{ton_group}}
+StandardOutput=file:{{log_path}}/node_d.log
+StandardError=file:{{log_path}}/node_d.err
+
+[Install]
+WantedBy=multi-user.target

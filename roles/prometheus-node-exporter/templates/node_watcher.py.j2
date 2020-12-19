@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+import config
+import requests
+import socket
+import subprocess
+import json
+
+
+bot_key = "{{ watcher_bot_key }}"
+g_id = "{{ watcher_g_id }}"
+l_dir = "{{ node_exporter_custom_metrics_folder }}"
+l_file = "node_metrics.prom"
+tc_dir = "{{ install_path }}/{{ ton_src }}/ton/build/utils/"
+tk_dir = "/home/{{ ton_user }}/ton-keys/"
+s_dir = "{{ install_path }}/{{ ton_src }}/scripts/"
+ok_file = "{{ node_exporter_custom_metrics_folder }}/old_addr"
+node_file = "{{ node_exporter_custom_metrics_folder }}/node_id"
+
+
+# Wallet balance
+def check_balance():
+    try:
+        addr = open(tk_dir + socket.gethostname() + ".addr")
+        wlt = addr.read().strip()
+        bCmnd = tc_dir + "tonos-cli account " + \
+            wlt + " | grep -i 'balance' | awk '{print $2}' "
+        b = str(subprocess.check_output(bCmnd, shell=True,
+                                        executable='/bin/bash', encoding='utf-8'))
+        b = int(int(b) / 1000000000)
+        return b
+    except:
+        tg_notification("Can't get wallet balance")
+
+
+# Node diff
+def check_diff():
+    try:
+        dCmnd = s_dir + \
+            "check_node_sync_status.sh | grep TIME_DIFF | awk '{print $4}'"
+        d = int(subprocess.check_output(dCmnd, shell=True,
+                                        executable='/bin/bash', encoding='utf-8'))
+        return d
+    except:
+        tg_notification("Can't get node time diff")
+
+# Check validator
+def validator():
+    try:
+        newK = open(tk_dir + "elections/" + socket.gethostname() + "-election-adnl-key")
+        nk = newK.read().lower()
+        newN = open(tk_dir + "elections/" + socket.gethostname() + "-election-key")
+        nn = newN.read().lower()
+        oldK = open(ok_file)
+        ok = oldK.read().lower().strip()
+        for line in nk.split("\n"):
+            if "created new key" in line:
+                k = line[16:].strip()
+        for line in nn.split("\n"):
+            if "created new key" in line:
+                n = line[16:].strip()
+        vCmnd = tc_dir + "tonos-cli getconfig 34"
+        v = str(subprocess.check_output(vCmnd, shell = True, executable='/bin/bash', encoding='utf-8'))
+        j = json.loads(v[42:])
+        val = 0
+        for list in j["list"]:
+            if list['adnl_addr'].strip() == ok:
+                val = list
+            elif list['adnl_addr'].strip() == k:
+                var = list
+                with open(ok_file, "w") as text_f:
+                    text_f.write(format(k))
+                with open(node_file, "w") as node_f:
+                    node_f.write(format(n))
+        return val, j["total"]
+    except:
+        tg_notification("Can't get validator information")
+
+# Election nubmer
+def e_num():
+    try:
+        eCmnd = tc_dir + \
+            "tonos-cli runget -1:3333333333333333333333333333333333333333333333333333333333333333 active_election_id | grep -i 'Result' | awk '{print $2}'"
+        e = str(subprocess.check_output(eCmnd, shell = True, executable='/bin/bash', encoding='utf-8'))
+        n = e[2:-3]
+        if str(n) == "0x0":
+            n = 0
+            return int(n)
+        return int(n, 16)
+    except:
+        tg_notification("Can't get election number")
+
+# Telegram notification
+def tg_notification(msg):
+    botToken = bot_key
+    botChatID = g_id
+    message = '<b>ALERT!</b> %s!' % msg
+    sendText = 'https://api.telegram.org/bot' + botToken + \
+        '/sendMessage?chat_id=' + botChatID + '&parse_mode=html&text=' + message
+    response = requests.get(sendText)
+    return response.json()
+
+
+if __name__ == '__main__':
+    balance = check_balance()
+    if balance < 10001:
+        tg_notification("Node balance is" + str(balance))
+
+    diff = check_diff()
+    if diff < -50:
+        tg_notification("Diff is" + str(diff))
+    
+    election_num = e_num()
+
+    if election_num == 0:
+       elections = 0
+    else:
+       elections = 1
+
+    validator = validator()
+
+    if validator[0] != 0:
+        v = 1
+        weight = validator[0]["weight"]
+    else:
+        v = 0
+        weight = 0
+    
+    with open(l_dir + l_file, "w") as text_file:
+        text_file.write("node_diff {0}\n".format(diff))
+        text_file.write("node_balance {0}\n".format(balance))
+        text_file.write("total_validators {0}\n".format(validator[1]))
+        text_file.write("elections {0}\n".format(elections))
+        text_file.write("validator {0}\n".format(v))
+        text_file.write("validator_weight {0}\n".format(weight))

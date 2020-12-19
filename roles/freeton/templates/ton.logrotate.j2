@@ -1,0 +1,11 @@
+{{ log_path }}/*.log {
+        maxsize 100M
+        daily
+        missingok
+        rotate 14
+        compress
+        delaycompress
+        notifempty
+        create 0640 {{ton_user}} {{ton_group}}
+        copytruncate
+}

@@ -1,0 +1,31 @@
+#!/bin/bash -eE
+MSIG_ADDR=`cat /home/{{ ton_user }}/ton-keys/$HOSTNAME.addr`
+HELPER_ADDR=`cat /home/{{ ton_user }}/ton-keys/helper.addr`
+DEPOOL_ADDR=`cat /home/{{ ton_user }}/ton-keys/depool.addr`
+PROXY0_ADDR=`cat /home/{{ ton_user }}/ton-keys/proxy0.addr`
+PROXY1_ADDR=`cat /home/{{ ton_user }}/ton-keys/proxy1.addr`
+
+echo "ton_node_msig_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
+    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
+    -a 127.0.0.1:3031 -rc "getaccount $MSIG_ADDR" \
+    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" > {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+echo "ton_node_depool_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
+    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
+    -a 127.0.0.1:3031 -rc "getaccount $DEPOOL_ADDR" \
+    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+echo "ton_node_proxy0_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
+    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
+    -a 127.0.0.1:3031 -rc "getaccount $PROXY0_ADDR" \
+    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+echo "ton_node_proxy1_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
+    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
+    -a 127.0.0.1:3031 -rc "getaccount $PROXY1_ADDR" \
+    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+echo "ton_node_helper_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
+    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
+    -a 127.0.0.1:3031 -rc "getaccount $HELPER_ADDR" \
+    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom

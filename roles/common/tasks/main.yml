@@ -1,0 +1,80 @@
+---
+# Update apt cache
+- name: Update apt cache
+  apt:
+    update-cache: yes
+    cache_valid_time: 86400
+  become: yes
+
+# Upgrade System
+- name: Update all packages
+  apt: upgrade=dist
+  become: yes
+
+# Install packages
+- name: install basic packages
+  become: yes
+  apt: pkg={{ item }} state=latest
+  tags: [packages]
+  with_items:
+    - nginx
+    - ntp
+    - ntpdate
+    - mc
+    - nmap
+    - bmon
+    - vnstat
+    - git
+    - monit
+    - mtr-tiny
+    - screen
+    - wget
+    - curl
+    - sysstat
+    - dnsutils
+    - jq
+    - python-passlib
+
+# Sync time
+- name: sync time
+  shell:
+    cmd: ntpdate -u pool.ntp.org
+  args:
+    executable: /bin/bash
+
+- name: start ntp
+  service:
+    name: ntp
+    state: started
+    enabled: true
+
+- name: Put password file
+  htpasswd:
+    path: /etc/nginx/htpasswd
+    name: "{{nginx_auth_user}}"
+    password: "{{nginx_auth_passw}}"
+    owner: root
+    group: www-data
+    mode: 0640
+
+- name: Remove nginx default conf
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+# System performance
+
+- name: System performance
+  copy:
+    src: "ton.conf"
+    dest: "/etc/sysctl.d/ton.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: System Perfomance enable
+  become: yes
+  shell:
+    cmd: sysctl -p -e /etc/sysctl.d/ton.conf
+  args:
+    executable: /bin/bash
