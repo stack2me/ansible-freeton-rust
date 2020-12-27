@@ -1,0 +1,38 @@
+---
+- name: Create ton group
+  group:
+    name: "{{ ton_group }}"
+    state: present
+
+# Create ton user
+- name: Create ton user
+  user:
+    shell: "/bin/bash"
+    name: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+# Create folder for configs
+- name: Create config ton directory
+  file:
+    state: directory
+    path: "/etc/ton/"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "744"
+
+# telegram secret
+- name: Create telegram.secret
+  template:
+    src: telegram.secret.j2
+    dest: /etc/ton/telegram.secret
+    owner: "{{ ton_group }}"
+    group: "{{ ton_group }}"
+    mode: "600"
+
+- name: Install ton_notifier
+  copy:
+    src: "telegram_notifier.sh"
+    dest: "/usr/local/sbin/telegram_notifier.sh"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"

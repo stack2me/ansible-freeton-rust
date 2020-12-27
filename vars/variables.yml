@@ -27,3 +27,7 @@ nginx_auth_passw: S0mePassw0rd
 #node_watcher
 watcher_bot_key: "xxxx:yyyy" # Bot key from @BotFather
 watcher_g_id: "-zzzzzzzz" # Telegram group/chat id (should start with '-')
+
+# telegram creds
+telegram_chat_id:
+telegram_bot_token:
