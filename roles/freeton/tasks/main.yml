@@ -12,12 +12,12 @@
     name: "{{ ton_user }}"
     group: "{{ ton_group }}"
 
-- name: Allow ton user sudo
-  lineinfile:
-    dest: /etc/sudoers
-    state: present
-    regexp: "^{{ ton_user }}"
-    line: "{{ ton_user }} ALL=(ALL) NOPASSWD: ALL"
+# - name: Allow ton user sudo
+#   lineinfile:
+#     dest: /etc/sudoers
+#     state: present
+#     regexp: "^{{ ton_user }}"
+#     line: "{{ ton_user }} ALL=(ALL) NOPASSWD: ALL"
 
 # Create folder for logs
 - name: Create folder for logs
@@ -28,70 +28,6 @@
     group: "{{ ton_group }}"
     mode: "744"
 
-# Pull repository
-- name: pull repo
-  git:
-    repo: "https://github.com/tonlabs/{{ ton_src }}.git"
-    dest: "{{ install_path }}/{{ ton_src }}/"
-
-# Tonuser is own of folder
-- name: Own tonuser
-  file:
-    path: "{{ install_path }}/{{ ton_src }}/"
-    recurse: yes
-    owner: "{{ ton_user }}"
-    group: "{{ ton_group }}"
-
-# Check build
-- name: Check artifact
-  stat:
-    path: "{{ install_path }}/{{ ton_src }}//configs/SafeMultisigWallet.tvc"
-  register: build_done
-
-# Build node
-- name: Build node
-  shell:
-    cmd: source env.sh && ./build.sh
-    chdir: "{{ install_path }}/{{ ton_src }}//scripts"
-  args:
-    executable: /bin/bash
-  when: build_done.stat.exists == false
-
-# Check key directory for avoid recreate
-- name: Check keys directory
-  stat:
-    path: "/home/{{ ton_user }}/ton-keys"
-  register: keyfolder
-
-# Setup node
-- name: Setup node
-  become_user: "{{ ton_user }}"
-  shell:
-    cmd: export NETWORK_TYPE="{{ ton_src }}" && ./setup.sh
-    chdir: "{{ install_path }}/{{ ton_src }}/scripts"
-  args:
-    executable: /bin/bash
-  when: keyfolder.stat.exists == false
-
-# Generate new keys
-- name: Generate keys
-  shell:
-    cmd: ./msig_genaddr.sh >> "/home/{{ ton_user }}/ton-keys/seed_phrase.secret"
-    chdir: "{{ install_path }}/{{ ton_src }}/scripts"
-  become_user: "{{ ton_user }}"
-  args:
-    executable: /bin/bash
-  when: keyfolder.stat.exists == false
-
-# Add service
-- name: Create Unit file
-  template:
-    src: ton.service.j2
-    dest: /etc/systemd/system/ton.service
-    mode: "644"
-  notify:
-    - reload systemctl
-
 # Add logrotate
 - name: Create logrotate
   template:
@@ -99,42 +35,53 @@
     dest: /etc/logrotate.d/ton
     mode: "644"
 
-# Check that service is working and start on boot
-- name: Start ton
-  service:
-    name: ton.service
-    state: started
-    enabled: yes
+- name: Create folder for freeton db
+  file:
+    state: directory
+    path: /var/ton-work
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "700"
 
-# Add cronjob
-- name: Cronjob for validator script
-  cron:
-    name: "validator script"
-    minute: "*/30"
-    cron_file: ton_validator
-    user: "{{ton_user}}"
-    job: "{{ install_path }}/{{ ton_src }}/scripts/validator_msig.sh 10001 >> {{log_path}}/validator.log"
-#
-#
-#
-#
-# Not sure that this action is necessary
+- name: Create folder for freeton configs
+  file:
+    state: directory
+    path: /etc/ton
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "700"
 
-# Get publickey
-# - name: Get publickey
-#   shell:
-#     cmd: cat msig.keys.json | jq -r '.public'
-#     chdir: "/home/{{ ton_user }}/ton-keys"
-#   register: publickey
-#   args:
-#     executable: /bin/bash
-#
-# # Deploy wallet
-# - name: Deploy wallet
-#   shell:
-#     cmd: ./tonos-cli deploy "{{ install_path }}/{{ ton_src }}/configs/SafeMultisigWallet.tvc '{"owners":["0x{{ publickey.stdout }}"],"reqConfirms":1}' --abi "{{ install_path }}/{{ ton_src }}/configs/SafeMultisigWallet.abi.json" --sign "{{ install_path }}/ton-keys/msig.keys.json" --wc -1
-#     chdir: "{{ install_path }}/{{ ton_src }}/ton/build/utils"
-#   args:
-#     executable: /bin/bash
-#   when: keyfolder.stat.exists == false
+# Pull smart contracts
+- name: pull repo
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-contracts.git"
+    dest: "/etc/ton/ton-labs-contracts"
 
+- name: Own tonuser
+  file:
+    path: "/etc/ton/ton-labs-contracts"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+- name: Download tonos-cli binary
+  become: no
+  get_url:
+    url: "https://github.com/tonlabs/tonos-cli/archive/v0.2.0.tar.gz" # needs variable!!!!!!!!1
+    dest: "/tmp/v0.2.0.tar.gz"
+
+- name: Unarchive tonos-cli
+  become: no
+  unarchive:
+    src: "/tmp/v0.2.0.tar.gz" # needs variable!!!!!!!!1
+    dest: "/tmp"
+    remote_src: yes
+
+- name: Copy file with owner and permissions
+  copy:
+    src: "/tmp/tonos-cli-0.2.0/tonos-cli" # needs variable!!!!!!!!1
+    dest: "/usr/local/sbin/tonos-cli"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_user }}"
+    mode: "0755"
