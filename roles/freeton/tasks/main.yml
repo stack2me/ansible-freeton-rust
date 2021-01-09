@@ -52,7 +52,7 @@
     mode: "700"
 
 # Pull smart contracts
-- name: pull repo
+- name: pull ton-labs-contracts
   git:
     repo: "https://github.com/tonlabs/ton-labs-contracts.git"
     dest: "/etc/ton/ton-labs-contracts"
@@ -85,3 +85,5 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_user }}"
     mode: "0755"
+
+- include_tasks: docker.yml
