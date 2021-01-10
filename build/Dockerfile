@@ -41,12 +41,13 @@ RUN useradd -d /home/ton/ -m -g users -s /bin/bash ton
 
 COPY --from=node_rust_build /root/ton-labs-node/target/release/ton_node /home/ton/ton_node
 COPY entrypoint.sh /home/ton/entrypoint.sh
+RUN mkdir /home/ton/configs /home/ton/logs /home/ton/node_db
+
 
 RUN chown ton: /home/ton/*
 
 USER ton
 WORKDIR /home/ton
 
-
-# ENTRYPOINT ["/home/ton/entrypoint.sh"]
+ENTRYPOINT ["sh", "entrypoint.sh"]
 

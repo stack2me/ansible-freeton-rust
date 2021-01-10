@@ -35,15 +35,7 @@
     dest: /etc/logrotate.d/ton
     mode: "644"
 
-- name: Create folder for freeton db
-  file:
-    state: directory
-    path: /var/ton-work
-    owner: "{{ ton_user }}"
-    group: "{{ ton_group }}"
-    mode: "700"
-
-- name: Create folder for freeton configs
+- name: Create folder ton directory
   file:
     state: directory
     path: /etc/ton
@@ -51,8 +43,22 @@
     group: "{{ ton_group }}"
     mode: "700"
 
+# Pull network global configs
+- name: Pull network configs
+  become_user: "{{ ton_user }}"
+  get_url:
+    url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/configs/ton-global.config.json" # network hardcoded improve when we reach stale !!!!!
+    dest: "/etc/ton/configs/ton-global.config.json"
+
+# Pull network default configs
+- name: Pull network configs
+  become_user: "{{ ton_user }}"
+  get_url:
+    url: "https://raw.githubusercontent.com/tonlabs/ton-labs-node/master/configs/default_config.json" # network hardcoded improve when we reach stale !!!!!
+    dest: "/etc/ton/configs/default_config.json"
+
 # Pull smart contracts
-- name: pull ton-labs-contracts
+- name: Pull ton-labs-contracts
   git:
     repo: "https://github.com/tonlabs/ton-labs-contracts.git"
     dest: "/etc/ton/ton-labs-contracts"
@@ -87,3 +93,22 @@
     mode: "0755"
 
 - include_tasks: docker.yml
+
+- name: Create folder for freeton db
+  file:
+    state: directory
+    recurse: yes
+    path: /var/ton-work/db
+    owner: "{{ ton_user }}"
+    group: "docker"
+    mode: "777" # needs improve !!!!!!!!!!!!!
+
+- name: Create folder for ton configs
+  file:
+    state: directory
+    path: /etc/ton/configs
+    owner: "{{ ton_user }}"
+    group: "docker"
+    mode: "777" # needs improve !!!!!!!!!!!!!
+
+# docker run -v /etc/ton/configs/:/home/ton/configs -v /var/ton-work/db/:/home/ton/node_db -e NETWORK_TYPE=rustnet.ton.dev -it a2de2e67af16 /bin/bash
