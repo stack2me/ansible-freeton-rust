@@ -37,7 +37,7 @@ FROM ubuntu:18.04 as node_rust
 
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -d /home/ton/ -m -g users -s /bin/bash ton
+RUN useradd -u 1090 -d /home/ton/ -m -g users -s /bin/bash ton
 
 COPY --from=node_rust_build /root/ton-labs-node/target/release/ton_node /home/ton/ton_node
 COPY entrypoint.sh /home/ton/entrypoint.sh

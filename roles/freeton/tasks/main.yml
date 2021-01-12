@@ -9,6 +9,7 @@
 - name: Create ton user
   user:
     shell: "/bin/bash"
+    uid: 1090
     name: "{{ ton_user }}"
     group: "{{ ton_group }}"
 
@@ -42,6 +43,23 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "700"
+
+- name: Create folder for freeton db
+  file:
+    state: directory
+    recurse: yes
+    path: /var/ton-work/db
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "755"
+
+- name: Create folder for ton configs
+  file:
+    state: directory
+    path: /etc/ton/configs
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "755"
 
 # Pull network global configs
 - name: Pull network configs
@@ -93,22 +111,4 @@
     mode: "0755"
 
 - include_tasks: docker.yml
-
-- name: Create folder for freeton db
-  file:
-    state: directory
-    recurse: yes
-    path: /var/ton-work/db
-    owner: "{{ ton_user }}"
-    group: "docker"
-    mode: "777" # needs improve !!!!!!!!!!!!!
-
-- name: Create folder for ton configs
-  file:
-    state: directory
-    path: /etc/ton/configs
-    owner: "{{ ton_user }}"
-    group: "docker"
-    mode: "777" # needs improve !!!!!!!!!!!!!
-
 # docker run -v /etc/ton/configs/:/home/ton/configs -v /var/ton-work/db/:/home/ton/node_db -e NETWORK_TYPE=rustnet.ton.dev -it a2de2e67af16 /bin/bash
