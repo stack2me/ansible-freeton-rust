@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 LimitNOFILE=1024
-ExecStart={{ install_path }}/{{ ton_src }}/ton/build/validator-engine/validator-engine  -t "30" -C /var/ton-work/etc/ton-global.config.json --db /var/ton-work/db -l /var/log/ton/node.log -d
+ExecStart=/usr/local/sbin/ton/ton_node --configs /etc/ton/configs/ >>/var/log/ton/ton.log 2>>/var/log/ton/ton.err.log
 ExecStop=/bin/kill -HUP $MAINPID
 Restart=on-failure
 User={{ton_user}}

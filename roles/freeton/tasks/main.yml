@@ -13,12 +13,12 @@
     name: "{{ ton_user }}"
     group: "{{ ton_group }}"
 
-# - name: Allow ton user sudo
-#   lineinfile:
-#     dest: /etc/sudoers
-#     state: present
-#     regexp: "^{{ ton_user }}"
-#     line: "{{ ton_user }} ALL=(ALL) NOPASSWD: ALL"
+- name: Allow ton user sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: "^{{ ton_user }}"
+    line: "{{ ton_user }} ALL=(ALL) NOPASSWD: ALL"
 
 # Create folder for logs
 - name: Create folder for logs
@@ -34,9 +34,11 @@
   template:
     src: ton.logrotate.j2
     dest: /etc/logrotate.d/ton
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
     mode: "644"
 
-- name: Create folder ton directory
+- name: Create ton config directory
   file:
     state: directory
     path: /etc/ton
@@ -62,18 +64,44 @@
     mode: "755"
 
 # Pull network global configs
-- name: Pull network configs
+- name: Pull global network configs
   become_user: "{{ ton_user }}"
   get_url:
     url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/configs/ton-global.config.json" # network hardcoded improve when we reach stale !!!!!
     dest: "/etc/ton/configs/ton-global.config.json"
 
 # Pull network default configs
-- name: Pull network configs
+- name: Pull default network configs
   become_user: "{{ ton_user }}"
   get_url:
-    url: "https://raw.githubusercontent.com/tonlabs/ton-labs-node/master/configs/default_config.json" # network hardcoded improve when we reach stale !!!!!
-    dest: "/etc/ton/configs/default_config.json"
+    url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/default_config.json" # network hardcoded improve when we reach stale !!!!!
+    dest: "/etc/ton/configs/default_config.json_origin"
+
+- name: Patch default config
+  become_user: "{{ ton_user }}"
+  shell:
+    cmd: cat /etc/ton/configs/default_config.json_origin | jq '.+= {"internal_db_path":"/var/ton-work/db"}' > /etc/ton/configs/default_config.json
+  args:
+    executable: /bin/bash
+
+- name: Pull Elector.abi.json
+  become_user: "{{ ton_user }}"
+  get_url:
+    url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/Elector.abi.json" # network hardcoded improve when we reach stale !!!!!
+    dest: "/etc/ton/configs/Elector.abi.json"
+
+- name: Pull Elector.abi.json
+  become_user: "{{ ton_user }}"
+  get_url:
+    url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/console_template.json" # network hardcoded improve when we reach stale !!!!!
+    dest: "/etc/ton/configs/console_template.json"
+
+# Add logrotate
+- name: Create log config
+  template:
+    src: log_cfg.yml.j2
+    dest: /etc/ton/configs/log_cfg.yml
+    mode: "644"
 
 # Pull smart contracts
 - name: Pull ton-labs-contracts
@@ -109,6 +137,164 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_user }}"
     mode: "0755"
-
-- include_tasks: docker.yml
+#-----------------------------------------------------------------
+# - include_tasks: docker.yml
 # docker run -v /etc/ton/configs/:/home/ton/configs -v /var/ton-work/db/:/home/ton/node_db -e NETWORK_TYPE=rustnet.ton.dev -it a2de2e67af16 /bin/bash
+
+# - name: "Rust | Install"
+#   shell: "curl https://sh.rustup.rs -sSf | sh -s -- -y"
+#   changed_when: false
+
+# git clone --recursive "${TON_NODE_GITHUB_REPO}" ton-node
+
+# Create folder for logs
+- name: Create folder for binaries
+  file:
+    state: directory
+    recurse: yes
+    path: "/usr/local/sbin/ton/tools"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "744"
+
+# Pull repository
+- name: Pull rust node
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-node.git"
+    dest: "{{ install_path }}/ton-node/"
+
+# Copy configs
+- name: Copy configs
+  copy:
+    src: "{{ install_path }}/ton-node/target/release/ton_node"
+    dest: "/usr/local/sbin/ton/ton_node"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Tonuser is own of folder
+- name: Own tonuser
+  file:
+    path: "{{ install_path }}/ton-node/"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+# Build node
+- name: Build node
+  become_user: "{{ ton_user }}"
+  shell:
+    cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
+    chdir: "{{ install_path }}/ton-node/"
+  args:
+    executable: /bin/bash
+
+- name: Copy builded node
+  copy:
+    src: "{{ install_path }}/ton-node/target/release/ton_node"
+    dest: "/usr/local/sbin/ton/ton_node"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+- name: Pull rust node tools
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-node-tools.git"
+    dest: "{{ install_path }}/ton-node-tools/"
+
+# Tonuser is own of folder
+- name: Own tonuser tools
+  file:
+    path: "{{ install_path }}/ton-node-tools/"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+- name: Build node tools
+  become_user: "{{ ton_user }}"
+  shell:
+    cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
+    chdir: "{{ install_path }}/ton-node-tools/"
+  args:
+    executable: /bin/bash
+
+- name: Copy builded node-tools
+  copy:
+    src: "{{ install_path }}/ton-node-tools/target/release/{{ item }}"
+    dest: "/usr/local/sbin/ton/tools/{{ item }}"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+  with_items:
+    - "console"
+    - "keygen"
+
+- name: Copy script generate_console_config.sh
+  become_user: "{{ ton_user }}"
+  copy:
+    src: "generate_console_config.sh"
+    dest: "/usr/local/sbin/ton/tools"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Check key directory for avoid recreate
+- name: Check console config
+  stat:
+    path: "/etc/ton/configs/console.json"
+  register: console_config
+
+# Generate new keys
+- name: Generate keys
+  shell:
+    cmd: "/usr/local/sbin/ton/tools/generate_console_config.sh"
+  become_user: "{{ ton_user }}"
+  when: console_config.stat.exists == false
+
+# - name: Check keys directory
+#   stat:
+#     path: "/home/{{ ton_user }}/ton-keys"
+#   register: keyfolder
+# # Setup node
+# - name: Setup node
+#   become_user: "{{ ton_user }}"
+#   shell:
+#     cmd: export NETWORK_TYPE="{{ ton_src }}" && ./setup.sh
+#     chdir: "{{ install_path }}/{{ ton_src }}/scripts"
+#   args:
+#     executable: /bin/bash
+#   when: keyfolder.stat.exists == false
+
+# args:
+#   executable: /bin/bash
+# when: keyfolder.stat.exists == false
+# # Setup node
+# - name: Setup node
+#   become_user: "{{ ton_user }}"
+#   shell:
+#     cmd: export NETWORK_TYPE="{{ ton_src }}" && ./setup.sh
+#     chdir: "{{ install_path }}/{{ ton_src }}/scripts"
+#   args:
+#     executable: /bin/bash
+#   when: keyfolder.stat.exists == false
+# # Generate new keys
+# - name: Generate keys
+#   shell:
+#     cmd: ./msig_genaddr.sh >> "/home/{{ ton_user }}/ton-keys/seed_phrase.secret"
+#     chdir: "{{ install_path }}/{{ ton_src }}/scripts"
+#   become_user: "{{ ton_user }}"
+#   args:
+#     executable: /bin/bash
+#   when: keyfolder.stat.exists == false
+
+# Add service
+- name: Create Unit file
+  template:
+    src: ton.service.j2
+    dest: /etc/systemd/system/ton.service
+    mode: "644"
+  notify:
+    - reload systemctl
