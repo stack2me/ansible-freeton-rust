@@ -1,0 +1,24 @@
+---
+- name: "Rust | Install Cargo"
+  become_user: "{{ ton_user }}"
+  shell: "/home/{{ ton_user }}/.cargo/bin/cargo install {{ item.name }} | cat"
+  with_items: "{{ cargo_items }}"
+  register: cargo_result
+  changed_when: false
+  when: item.name is defined
+
+# - name: "Rust | Verify Cargo"
+#   become_user: "{{ ton_user }}"
+#   shell: "/home/{{ ton_user }}/.cargo/bin/cargo"
+#   with_items: "{{ cargo_result.results }}"
+#   changed_when: false
+#   failed_when:
+#     - ("Add --force to overwrite" not in item.stderr) and
+#       ("Finished" not in item.stderr)
+
+- name: "Rust | Verify Binary installation"
+  become_user: "{{ ton_user }}"
+  stat:
+    path: "/home/{{ ton_user }}/.cargo/bin/{{ item.binary }}"
+  with_items: "{{ cargo_items }}"
+  when: item.binary is defined
