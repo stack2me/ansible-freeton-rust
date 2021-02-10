@@ -1,0 +1,114 @@
+# Host out of memory 
+- alert: HostOutOfMemory
+  expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+  for: 2m
+  labels:
+    severity: warning
+  annotations:
+    summary: Host out of memory (instance {{ $labels.instance }})
+    description: Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+# Host memory under memory pressure 
+- alert: HostMemoryUnderMemoryPressure
+  expr: rate(node_vmstat_pgmajfault[1m]) > 1000
+  for: 2m
+  labels:
+    severity: warning
+  annotations:
+    summary: Host memory under memory pressure (instance {{ $labels.instance }})
+    description: The node is under heavy memory pressure. High rate of major page faults\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+- alert: HostUnusualNetworkThroughputIn
+  expr: sum by (instance) (rate(node_network_receive_bytes_total[2m])) / 1024 / 1024 > 100
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: Host unusual network throughput in (instance {{ $labels.instance }})
+    description: Host network interfaces are probably receiving too much data (> 100 MB/s)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+#  Host unusual network throughput out 
+  - alert: HostUnusualNetworkThroughputOut
+    expr: sum by (instance) (rate(node_network_transmit_bytes_total[2m])) / 1024 / 1024 > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host unusual network throughput out (instance {{ $labels.instance }})
+      description: Host network interfaces are probably sending too much data (> 100 MB/s)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+# Host out of disk space 
+  # Please add ignored mountpoints in node_exporter parameters like
+  # "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|run)($|/)".
+  # Same rule using "node_filesystem_free_bytes" will fire when disk fills for non-root users.
+  - alert: HostOutOfDiskSpace
+    expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host out of disk space (instance {{ $labels.instance }})
+      description: Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+#  Host disk will fill in 24 hours 
+  # Please add ignored mountpoints in node_exporter parameters like
+  # "--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|run)($|/)".
+  # Same rule using "node_filesystem_free_bytes" will fire when disk fills for non-root users.
+  - alert: HostDiskWillFillIn24Hours
+    expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs"}[1h], 24 * 3600) < 0 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host disk will fill in 24 hours (instance {{ $labels.instance }})
+      description: Filesystem is predicted to run out of space within the next 24 hours at current write rate\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+  #  Host out of inodes 
+  - alert: HostOutOfInodes
+    expr: node_filesystem_files_free{mountpoint ="/rootfs"} / node_filesystem_files{mountpoint="/rootfs"} * 100 < 10 and ON (instance, device, mountpoint) node_filesystem_readonly{mountpoint="/rootfs"} == 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host out of inodes (instance {{ $labels.instance }})
+      description: Disk is almost running out of available inodes (< 10% left)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+#  Host high CPU load 
+  - alert: HostHighCpuLoad
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host high CPU load (instance {{ $labels.instance }})
+      description: CPU load is > 80%\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+# Host SystemD service crashed 
+  - alert: HostSystemdServiceCrashed
+    expr: node_systemd_unit_state{state="failed"} == 1
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host SystemD service crashed (instance {{ $labels.instance }})
+      description: SystemD service crashed\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+# Host physical component too hot 
+  - alert: HostPhysicalComponentTooHot
+    expr: node_hwmon_temp_celsius > 75
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host physical component too hot (instance {{ $labels.instance }})
+      description: Physical hardware component too hot\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}
+
+# Host RAID disk failure 
+  - alert: HostRaidDiskFailure
+    expr: node_md_disks{state="failed"} > 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Host RAID disk failure (instance {{ $labels.instance }})
+      description: At least one device in RAID array on {{ $labels.instance }} failed. Array {{ $labels.md_device }} needs attention and possibly a disk swap\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}

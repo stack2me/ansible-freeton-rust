@@ -42,52 +42,52 @@ appenders:
       pattern: "{m}{n}"
 
 root:
-  level: info
+  level: error
   appenders:
     - rolling_logfile
 
 loggers:
   # node messages
   ton_node:
-    level: trace
+    level: error
   boot:
-    level: trace
+    level: error
   sync:
-    level: trace
+    level: error
 
   # adnl messages
   adnl:
-    level: info
+    level: error
 
   overlay:
-    level: info
+    level: error
 
   rldp:
-    level: info
+    level: error
 
   dht:
-    level: info
+    level: error
 
   # block messages
   ton_block:
-    level: debug
+    level: error
 
   # block messages
   executor:
-    level: debug
+    level: error
 
   # tvm messages
   tvm:
-    level: info
+    level: error
 
   librdkafka:
-    level: info
+    level: error
 
   validator:
-    level: debug
+    level: error
 
   catchain:
-    level: debug
+    level: error
 
   validator_session:
-    level: debug
+    level: error

@@ -4,8 +4,9 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-LimitNOFILE=1024
-ExecStart=/usr/local/sbin/ton/ton_node --configs /etc/ton/configs/ >>/var/log/ton/ton.log 2>>/var/log/ton/ton.err.log
+Environment="NETWORK_TYPE=rustnet.ton.dev"
+LimitNOFILE=65535
+ExecStart=/usr/local/sbin/ton/ton_node --configs /etc/ton/configs/
 ExecStop=/bin/kill -HUP $MAINPID
 Restart=on-failure
 User={{ton_user}}

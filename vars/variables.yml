@@ -4,7 +4,6 @@ ton_user: ton
 ton_group: ton
 install_path: /srv
 ton_src: main.ton.dev # possible values:  net.ton.dev | main.ton.dev
-network_type: main # possible values: net | main
 log_path: /var/log/ton
 
 # netdata
@@ -18,6 +17,7 @@ node_exporter_arch: amd64
 node_exporter_version: 1.0.1
 node_exporter_custom_metrics_folder: /var/lib/node_exporter/textfile_collector
 node_exporter_proxy_port: 8080
+network_type: main # possible values: net | main
 
 #nginx
 nginx_server_name: netdata.example.com

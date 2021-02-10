@@ -40,7 +40,6 @@ Roles of Ansible for install and monitor FreeTon node.
 - Change nginx user/password for basic_auth in `vars/variables.yml`
 - Add telegram bot token and group/chat id in `vars/variables.yml`
 - Run ansible: `ansible-playbook freeton.yaml -i freeton --ask-sudo-pass`
-- Ansible Build and setup node and save seed phrase `{{ install_path }}/ton-keys/seed_phrase.secret`
 - Deploy wallet [instruction](https://docs.ton.dev/86757ecb2/v/0/p/94921e-multisignature-wallet-management-in-tonos-cli)
 - install grafana [FreeTon Validator Dashboard](https://grafana.com/grafana/dashboards/13394)
 

@@ -1,31 +1,72 @@
 #!/bin/bash -eE
-MSIG_ADDR=`cat /home/{{ ton_user }}/ton-keys/$HOSTNAME.addr`
-HELPER_ADDR=`cat /home/{{ ton_user }}/ton-keys/helper.addr`
-DEPOOL_ADDR=`cat /home/{{ ton_user }}/ton-keys/depool.addr`
-PROXY0_ADDR=`cat /home/{{ ton_user }}/ton-keys/proxy0.addr`
-PROXY1_ADDR=`cat /home/{{ ton_user }}/ton-keys/proxy1.addr`
+# MSIG_ADDR=`cat /etc/ton/keys/$HOSTNAME.addr`
+# HELPER_ADDR=`cat /etc/ton/helper.addr`
+# DEPOOL_ADDR=`cat /etc/ton/depool.addr`
+# PROXY0_ADDR=`cat /etc/ton/proxy0.addr`
+# PROXY1_ADDR=`cat /etc/ton/proxy1.addr`
+# KICKER_ADDR=`cat /etc/ton/kicker.addr`
+# NETWORK="https://main.ton.dev"
 
-echo "ton_node_msig_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
-    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
-    -a 127.0.0.1:3031 -rc "getaccount $MSIG_ADDR" \
-    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" > {{ node_exporter_custom_metrics_folder }}/balance.prom
+# #tonos-cli
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $MSIG_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_msig_balance  $((nano_tokens/1000000000)) > {{ node_exporter_custom_metrics_folder }}/balance.prom
 
-echo "ton_node_depool_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
-    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
-    -a 127.0.0.1:3031 -rc "getaccount $DEPOOL_ADDR" \
-    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $DEPOOL_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_depool_balance  $((nano_tokens/1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
 
-echo "ton_node_proxy0_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
-    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
-    -a 127.0.0.1:3031 -rc "getaccount $PROXY0_ADDR" \
-    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $PROXY0_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_proxy0_balance  $((nano_tokens/1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
 
-echo "ton_node_proxy1_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
-    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
-    -a 127.0.0.1:3031 -rc "getaccount $PROXY1_ADDR" \
-    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $PROXY1_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_proxy1_balance  $((nano_tokens/1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
 
-echo "ton_node_helper_balance $((`"{{ install_path }}/{{ ton_src }}/ton/build/lite-client/lite-client" \
-    -p "/home/{{ ton_user }}/ton-keys/liteserver.pub" \
-    -a 127.0.0.1:3031 -rc "getaccount $HELPER_ADDR" \
-    -rc "quit" | sed -n -e 's/^.*balance is //p' | head -c-3` / 1000000000))" >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $HELPER_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_helper_balance  $((nano_tokens/1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+# nano_tokens=`/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $KICKER_ADDR | grep balance | sed 's/[^0-9]*//g'`
+# echo "ton_node_kicker_balance  $((nano_tokens/1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+
+# #!/bin/bash -eE
+MSIG_FILE="/etc/ton/keys/$HOSTNAME.addr"
+HELPER_FILE="/etc/ton/keys/helper.addr"
+DEPOOL_FILE="/etc/ton/keys/depool.addr"
+PROXY0_FILE="/etc/ton/keys/proxy0.addr"
+PROXY1_FILE="/etc/ton/keys/proxy1.addr"
+KICKER_FILE="/etc/ton/keys/kicker.addr"
+NETWORK="https://main.ton.dev"
+
+if [ -f "$MSIG_FILE" ]; then
+    MSIG_ADDR=$(cat $MSIG_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $MSIG_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_msig_balance  $((nano_tokens / 1000000000)) > {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi
+
+if [ -f "$DEPOOL_FILE" ]; then
+    DEPOOL_ADDR=$(cat $DEPOOL_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $DEPOOL_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_depool_balance $((nano_tokens / 1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi
+
+if [ -f "$PROXY0_FILE" ]; then
+    PROXY0_ADDR=$(cat $PROXY0_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $PROXY0_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_proxy0_balance  $((nano_tokens / 1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi
+
+if [ -f "$PROXY1_FILE" ]; then
+    PROXY1_ADDR=$(cat $PROXY1_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $PROXY1_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_proxy1_balance $((nano_tokens / 1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi
+
+if [ -f "$HELPER_FILE" ]; then
+    HELPER_ADDR=$(cat $HELPER_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $HELPER_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_helper_balance  $((nano_tokens / 1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi
+
+if [ -f "$KICKER_FILE" ]; then
+    KICKER_ADDR=$(cat $KICKER_FILE)
+    nano_tokens=$(/usr/local/sbin/ton/tools/tonos-cli --url $NETWORK account $KICKER_ADDR | grep balance | sed 's/[^0-9]*//g')
+    echo "ton_node_kicker_balance $((nano_tokens / 1000000000)) >> {{ node_exporter_custom_metrics_folder }}/balance.prom
+fi

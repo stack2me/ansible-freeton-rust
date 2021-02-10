@@ -1,12 +1,7 @@
 #!/bin/bash -eE
 TIME_DIFF=0
 
-for i in $("{{ install_path }}/{{ ton_src }}/ton/build/validator-engine-console/validator-engine-console" \
-    -a 127.0.0.1:3030 \
-    -k "/home/{{ ton_user }}/ton-keys/client" \
-    -p "/home/{{ ton_user }}/ton-keys/server.pub" \
-    -c "getstats" -c "quit" 2>&1 | grep time | awk '{print $2}'); do
-    TIME_DIFF=$((i - TIME_DIFF))
-done
-
+TIME_DIFF=`/usr/local/sbin/ton/tools/console -C /etc/ton/configs/console.json --cmd getstats | grep timediff | sed 's/[^0-9]*//g'`
 echo "ton_node_diff ${TIME_DIFF}" > {{ node_exporter_custom_metrics_folder }}/diff.prom
+
+
