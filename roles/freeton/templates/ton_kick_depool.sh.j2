@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+export TON_NETWORK=$(cat /etc/ton/ton_network.txt)
+
+ELECTION_ID=$(/usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK runget -1:3333333333333333333333333333333333333333333333333333333333333333 active_election_id | grep -i 'result:' | awk -F'[][]' '{print $2}' | sed 's/"//g')
+
+KICK_START=$(cat /etc/ton/keys/kick_start.addr)
+KICK_START_KEY="/etc/ton/keys/kick_start.key.json"
+MULTISIG=$(cat /etc/ton/keys/$HOSTNAME.addr)
+DEPOOL=$(cat /etc/ton/keys/depool.addr)
+COUNT=0
+
+if
+    [ $ELECTION_ID = 0x0 ]
+then
+    echo $(date +"%F %T No current elections================")
+    exit 1
+else
+    for FILE in *; do
+        echo "debug 1"
+        if [ "$ELECTION_ID" = "$FILE" ]; then
+            echo "debug 2"
+            echo $(date +"%F %T Already Submited================")
+            COUNT=1
+        fi
+    done
+fi
+
+echo "debug count = $COUNT"
+if [ "$COUNT" == 0 ]; then
+    echo "Sending Attempt to voting"
+    touch "$ELECTION_ID"
+    /usr/local/sbin/telegram_notifier.sh "Elections open!"
+    echo "\n=======================KICK======================"
+    /usr/local/sbin/telegram_notifier.sh "Kick depool"
+    /usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK call $KICK_START submitTransaction "{\"dest\":\"$DEPOOL\", \"value\":\"1000000000\", \"bounce\":\"true\", \"allBalance\":\"false\", \"payload\":\"te6ccgEBAQEABgAACCiAmCM=\"}" --abi /etc/ton/ton-labs-contracts/solidity/safemultisig/SafeMultisigWallet.abi.json --sign $KICK_START_KEY
+    echo "sleep 1m"
+    sleep 1m
+    echo "\n==================RUN VALIDATOR SCRIPT============"
+    /usr/local/sbin/telegram_notifier.sh "Run validator script"
+    VALIDATOR=$(/srv/main.ton.dev/scripts/validator_depool.sh)
+    sleep 30
+    TR=$(cd /srv/main.ton.dev/ton/build/utils/ && ./tonos-cli run $MULTISIG getTransactions {} --abi /srv/main.ton.dev/configs/SafeMultisigWallet.abi.json | grep id | awk '{print $2}' | cut -d '"' -f2)
+    /usr/local/sbin/telegram_notifier.sh "Transaction: $TR"
+fi

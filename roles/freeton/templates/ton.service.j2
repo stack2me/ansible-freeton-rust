@@ -4,7 +4,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-Environment="NETWORK_TYPE=rustnet.ton.dev"
+Environment="NETWORK_TYPE={{ ton_network }}"
 LimitNOFILE=65535
 ExecStart=/usr/local/sbin/ton/ton_node --configs /etc/ton/configs/
 ExecStop=/bin/kill -HUP $MAINPID
