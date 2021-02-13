@@ -4,9 +4,12 @@
   gather_facts: yes
   roles:
     - role: common
+    - role: rust
     - role: freeton
     - role: netdata
     - role: prometheus-node-exporter
+    - role: notifier
+    - role: promtail
 
   vars_files:
     - vars/variables.yml

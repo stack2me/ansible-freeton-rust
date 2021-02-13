@@ -9,9 +9,12 @@ Roles of Ansible for install and monitor FreeTon node.
 ## Roles:
 
 - **common** - preparing system and install dependencies
+- **rust​** - install and upgrade rust
 - **freeton** - build and setup FreeTon node
 - **netdata** - real-time monitoring
 - **prometheus-node-exporter** - exporter for hardware and OS metrics exposed, also this gives opportunity get _balance_ and _diff_ in freeton network
+- **notifier**​ - telegram notifications about node events
+- **promtail**​ - log collector for Loki
 
 ## Functional
 
@@ -27,12 +30,15 @@ Roles of Ansible for install and monitor FreeTon node.
   - Install netdata for realtime status <host>/netdata
   - install prometheus-node-exporter for collect metrics
     - collecting data about node status(node diff, wallet balance, total validators, if your node became validator, open elections)
+- Notifications about node events like an open election, approve/reject transactions etc...
+- Script automatically sending stake
+- Script control transactions (confirm/reject) with notifications to telegram
 - Install nginx for close entry poins of monitoring systems
 - Install and sync ntp server for avoid time shift
 
 * System upgrade
 
-## Installation
+## Installation 1.1
 
 - Pull repository
 - Add your host to `freeton` file
@@ -42,6 +48,20 @@ Roles of Ansible for install and monitor FreeTon node.
 - Run ansible: `ansible-playbook freeton.yaml -i freeton --ask-sudo-pass`
 - Deploy wallet [instruction](https://docs.ton.dev/86757ecb2/v/0/p/94921e-multisignature-wallet-management-in-tonos-cli)
 - install grafana [FreeTon Validator Dashboard](https://grafana.com/grafana/dashboards/13394)
+
+## Installation 1.2
+
+### Setup validators keys
+
+- Generate Multisig wallet [SafeMultisig](https://github.com/tonlabs/ton-labs-contracts/tree/master/solidity/safemultisig).
+- - Multisig address should be situated `/etc/ton/keys/${VALIDATOR_NAME}.addr`
+- - Multisig keys should be situated `/etc/ton/keys/msig.keys.json`
+- Generate Kicker wallet [Kicker](https://github.com/tonlabs/ton-labs-contracts/tree/master/solidity/safemultisig).
+- - Kicker address should be situated `/etc/ton/keys/kick_start.addr`
+- - Kicker keys should be situated `/etc/ton/keys/kick_start.key.json`
+- Generate Depool wallet [Depoolv3](https://docs.ton.dev/86757ecb2/p/04040b-run-depool-v3).
+- - Kicker address should be situated `/etc/ton/keys/depool.addr`
+- - Kicker keys should be situated `/etc/ton/keys/depool.key.json`
 
 ## Custom metrics in prometheus-node-exporter
 
@@ -65,3 +85,11 @@ Before install grafana template (grafana\*freeton\*node\*alerts.json) please rep
 ![Alt text](images/dashboard.png?raw=true "FreeTon dashboard")
 
 ![Alt text](images/dashboard2.png?raw=true "FreeTon dashboard part2")
+
+## Todo List:
+
+- Alerts for log
+- Dashboard for logs
+- Distribution by binaries
+- Security improvements
+- Alerts based on prometheus

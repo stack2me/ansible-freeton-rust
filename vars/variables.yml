@@ -2,11 +2,12 @@
 #ton node
 ton_user: ton
 ton_group: ton
-install_path: /srv
-ton_src: main.ton.dev # possible values:  net.ton.dev | main.ton.dev
+ton_node_path: /usr/local/sbin/ton
+ton_network: gql.custler.net
+network_type: main # possible values: net | main | rust
 log_path: /var/log/ton
 
-# netdata
+#netdata
 netdata_history: 3600 #second
 netdata_proxy_port: 80
 
@@ -17,17 +18,25 @@ node_exporter_arch: amd64
 node_exporter_version: 1.0.1
 node_exporter_custom_metrics_folder: /var/lib/node_exporter/textfile_collector
 node_exporter_proxy_port: 8080
-network_type: main # possible values: net | main
 
 #nginx
-nginx_server_name: netdata.example.com
+nginx_server_name: netdata.stack2.me
 nginx_auth_user: metrics
-nginx_auth_passw: S0mePassw0rd
+nginx_auth_passw: S0m3Passw0rd
 
-#node_watcher
-watcher_bot_key: "xxxx:yyyy" # Bot key from @BotFather
-watcher_g_id: "-zzzzzzzz" # Telegram group/chat id (should start with '-')
+#telegram notifier
+telegram_chat_id: "-4XXXXXXXXX"
+telegram_bot_token: "1XXXXXXXXXXXXXXXXXXXXXX"
 
-# telegram creds
-telegram_chat_id:
-telegram_bot_token:
+#rust
+rust_version: 1.49.0
+
+#promtail
+promtail_config_scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/ton/*log
