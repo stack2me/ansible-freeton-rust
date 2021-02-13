@@ -1,7 +1,18 @@
 #!/bin/bash -eE
 TIME_DIFF=0
+NETWORK=$(cat /etc/ton/ton_network.txt)
+
 
 TIME_DIFF=`/usr/local/sbin/ton/tools/console -C /etc/ton/configs/console.json --cmd getstats | grep timediff | sed 's/[^0-9]*//g'`
 echo "ton_node_diff ${TIME_DIFF}" > {{ node_exporter_custom_metrics_folder }}/diff.prom
+
+ELECTIONS=$(/usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK runget -1:3333333333333333333333333333333333333333333333333333333333333333 active_election_id | grep -i 'result:' | awk -F'[][]' '{print $2}' | sed 's/"//g' | wc -c)
+
+if [[ ${ELECTIONS} -ne 1 ]] ; then
+    echo "ton_elections 1" >> {{ node_exporter_custom_metrics_folder }}/diff.prom
+else echo "ton_elections 0" >> {{ node_exporter_custom_metrics_folder }}/diff.prom
+fi
+
+
 
 
