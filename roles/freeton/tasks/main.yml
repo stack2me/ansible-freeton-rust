@@ -85,8 +85,8 @@
 - name: Pull global network configs
   become_user: "{{ ton_user }}"
   get_url:
-    url: https://raw.githubusercontent.com/FreeTON-Network/fld.ton.dev/main/configs/fld.ton.dev/ton-global.config.json #fld.ton.dev
-    # url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/configs/ton-global.config.json" # network hardcoded improve when we reach stale !!!!! rustnet.ton.dev
+    # url: https://raw.githubusercontent.com/FreeTON-Network/fld.ton.dev/main/configs/fld.ton.dev/ton-global.config.json #fld.ton.dev
+    url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/configs/ton-global.config.json" # network hardcoded improve when we reach stale !!!!! rustnet.ton.dev
     dest: "/etc/ton/configs/ton-global.config.json"
 
 # Pull network default configs
@@ -158,79 +158,79 @@
     mode: "0755"
 
 # ============================ Temporaty disable
-# # Pull repository
-# - name: Pull rust node
-#   git:
-#     repo: "https://github.com/tonlabs/ton-labs-node.git"
-#     dest: "/srv/ton-node/"
+# Pull repository
+- name: Pull rust node
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-node.git"
+    dest: "/srv/ton-node/"
 
-# # Tonuser is own of folder
-# - name: Own tonuser
-#   file:
-#     path: "/srv/ton-node/"
-#     recurse: yes
-#     owner: "{{ ton_user }}"
-#     group: "{{ ton_group }}"
+# Tonuser is own of folder
+- name: Own tonuser
+  file:
+    path: "/srv/ton-node/"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
 
-# # Build node
-# - name: Build node
-#   become_user: "{{ ton_user }}"
-#   shell:
-#     cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
-#     chdir: "/srv/ton-node/"
-#   args:
-#     executable: /bin/bash
+# Build node
+- name: Build node
+  become_user: "{{ ton_user }}"
+  shell:
+    cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
+    chdir: "/srv/ton-node/"
+  args:
+    executable: /bin/bash
 
-# - name: Copy builded node
-#   copy:
-#     src: "/srv/ton-node/target/release/ton_node"
-#     dest: "{{ ton_node_path }}/ton_node"
-#     remote_src: yes
-#     owner: "{{ ton_user }}"
-#     group: "{{ ton_group }}"
-#     mode: "0755"
+- name: Copy builded node
+  copy:
+    src: "/srv/ton-node/target/release/ton_node"
+    dest: "{{ ton_node_path }}/ton_node"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
 
-# - name: Pull rust node tools
-#   git:
-#     repo: "https://github.com/tonlabs/ton-labs-node-tools.git"
-#     dest: "/srv/ton-node-tools/"
+- name: Pull rust node tools
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-node-tools.git"
+    dest: "/srv/ton-node-tools/"
 
-# # Tonuser is own of folder
-# - name: Own tonuser tools
-#   file:
-#     path: "/srv/ton-node-tools/"
-#     recurse: yes
-#     owner: "{{ ton_user }}"
-#     group: "{{ ton_group }}"
+# Tonuser is own of folder
+- name: Own tonuser tools
+  file:
+    path: "/srv/ton-node-tools/"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
 
-# - name: Build node tools
-#   become_user: "{{ ton_user }}"
-#   shell:
-#     cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
-#     chdir: "/srv/ton-node-tools/"
-#   args:
-#     executable: /bin/bash
+- name: Build node tools
+  become_user: "{{ ton_user }}"
+  shell:
+    cmd: /home/{{ ton_user }}/.cargo/bin/cargo build --release
+    chdir: "/srv/ton-node-tools/"
+  args:
+    executable: /bin/bash
 
-# - name: Copy builded node-tools
-#   copy:
-#     src: "/srv/ton-node-tools/target/release/{{ item }}"
-#     dest: "{{ ton_node_path }}/tools/{{ item }}"
-#     remote_src: yes
-#     owner: "{{ ton_user }}"
-#     group: "{{ ton_group }}"
-#     mode: "0755"
-#   with_items:
-#     - "console"
-#     - "keygen"
+- name: Copy builded node-tools
+  copy:
+    src: "/srv/ton-node-tools/target/release/{{ item }}"
+    dest: "{{ ton_node_path }}/tools/{{ item }}"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+  with_items:
+    - "console"
+    - "keygen"
 
-# - name: Copy script generate_console_config.sh
-#   become_user: "{{ ton_user }}"
-#   copy:
-#     src: "generate_console_config.sh"
-#     dest: "{{ ton_node_path }}/tools"
-#     owner: "{{ ton_user }}"
-#     group: "{{ ton_group }}"
-#     mode: "0755"
+- name: Copy script generate_console_config.sh
+  become_user: "{{ ton_user }}"
+  copy:
+    src: "generate_console_config.sh"
+    dest: "{{ ton_node_path }}/tools"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
 
 # =================================
 
