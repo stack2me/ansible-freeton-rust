@@ -157,7 +157,7 @@
     minute: "*/5"
     cron_file: ton_network_grab
     user: "{{ton_user}}"
-    job: "/usr/local/sbin/ton_network_grab {{ node_exporter_custom_metrics_folder }}/ton_network.prom {{ network_type }} /home/{{ ton_user }}/ton-keys/elections/{{ hostname.stdout_lines[0] }}-election-adnl-key"
+    job: "/usr/local/sbin/ton_network_grab /var/lib/node_exporter/textfile_collector/ton_network.prom `cat /etc/ton/ton_network.txt`/graphql /etc/ton/configs/config.json"
 
 # Install node_diff
 - name: Install node_diff
