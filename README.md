@@ -54,14 +54,14 @@ Roles of Ansible for install and monitor FreeTon node.
 ### Setup validators keys
 
 - Generate Multisig wallet [SafeMultisig](https://github.com/tonlabs/ton-labs-contracts/tree/master/solidity/safemultisig).
-- - Multisig address should be situated `/etc/ton/keys/${VALIDATOR_NAME}.addr`
-- - Multisig keys should be situated `/etc/ton/keys/msig.keys.json`
+- - Multisig address should be situated `/etc/ton/configs/${VALIDATOR_NAME}.addr`
+- - Multisig keys should be situated `/etc/ton/configs/keys/msig.keys.json`
 - Generate Kicker wallet [Kicker](https://github.com/tonlabs/ton-labs-contracts/tree/master/solidity/safemultisig).
-- - Kicker address should be situated `/etc/ton/keys/kick_start.addr`
-- - Kicker keys should be situated `/etc/ton/keys/kick_start.key.json`
+- - Kicker address should be situated `/etc/ton/configs/kick_start.addr`
+- - Kicker keys should be situated `/etc/ton/configs/keys/kick_start.key.json`
 - Generate Depool wallet [Depoolv3](https://docs.ton.dev/86757ecb2/p/04040b-run-depool-v3).
-- - Kicker address should be situated `/etc/ton/keys/depool.addr`
-- - Kicker keys should be situated `/etc/ton/keys/depool.key.json`
+- - Kicker address should be situated `/etc/configs/ton/depool.addr`
+- - Kicker keys should be situated `/etc/configs/ton/keys/depool.key.json`
 
 ## Custom metrics in prometheus-node-exporter
 

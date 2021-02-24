@@ -58,7 +58,8 @@
 - name: Create folder for ton configs
   file:
     state: directory
-    path: /etc/ton/configs
+    path: /etc/ton/configs/keys
+    recurse: yes
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "755"
@@ -278,4 +279,4 @@
     minute: "*/30"
     cron_file: ton_validator
     user: "{{ton_user}}"
-    job: "{{ton_node_path}}/tools/ton_validator.sh depool >> {{log_path}}/validator.log"
+    job: "{{ ton_node_path }}/tools/ton_kick_depool.sh >> {{log_path}}/validator.log"

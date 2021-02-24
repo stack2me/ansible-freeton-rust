@@ -39,8 +39,8 @@ if [ "$COUNT" == 0 ]; then
     sleep 1m
     echo "\n==================RUN VALIDATOR SCRIPT============"
     /usr/local/sbin/telegram_notifier.sh "Run validator script"
-    VALIDATOR=$(/srv/main.ton.dev/scripts/validator_depool.sh)
+    VALIDATOR=$({{ton_node_path}}/tools/ton_validator.sh depool)
     sleep 30
-    TR=$(cd /srv/main.ton.dev/ton/build/utils/ && ./tonos-cli run $MULTISIG getTransactions {} --abi /srv/main.ton.dev/configs/SafeMultisigWallet.abi.json | grep id | awk '{print $2}' | cut -d '"' -f2)
+    TR=$(/usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK run $MULTISIG getTransactions {} --abi /etc/ton/ton-labs-contracts/solidity/safemultisig/SafeMultisigWallet.abi.json | grep id | awk '{print $2}' | cut -d '"' -f2)
     /usr/local/sbin/telegram_notifier.sh "Transaction: $TR"
 fi
