@@ -1,0 +1,113 @@
+---
+# tasks file for approver
+
+# Create ton group
+- name: Create ton group
+  group:
+    name: "{{ ton_group }}"
+    state: present
+
+# Create ton user
+- name: Create ton user
+  user:
+    shell: "/bin/bash"
+    uid: 1090
+    name: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+# Create folder for logs
+- name: Create folder for logs
+  file:
+    state: directory
+    path: "{{log_path}}"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "744"
+
+- name: Create ton config directory
+  file:
+    state: directory
+    path: /etc/ton
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "700"
+
+- name: Create folder for ton configs
+  file:
+    state: directory
+    path: /etc/ton/configs/keys
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "755"
+
+# Create folder for binary
+- name: Create folder for binaries
+  file:
+    state: directory
+    recurse: yes
+    path: "{{ ton_node_path }}/tools"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "744"
+
+- name: Create network file
+  template:
+    src: ton_network.txt.j2
+    dest: /etc/ton/ton_network.txt
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "644"
+
+# Pull smart contracts
+- name: Pull ton-labs-contracts
+  git:
+    repo: "https://github.com/tonlabs/ton-labs-contracts.git"
+    dest: "/etc/ton/ton-labs-contracts"
+
+- name: Own tonuser
+  file:
+    path: "/etc/ton/ton-labs-contracts"
+    recurse: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+
+- name: Download tonos-cli binary
+  become: no
+  get_url:
+    url: "https://github.com/tonlabs/tonos-cli/archive/v0.6.0.tar.gz"
+    dest: "/tmp/v0.6.0.tar.gz"
+
+- name: Unarchive tonos-cli
+  become: no
+  unarchive:
+    src: "/tmp/v0.6.0.tar.gz"
+    dest: "/tmp"
+    remote_src: yes
+
+- name: Copy file with owner and permissions
+  copy:
+    src: "/tmp/tonos-cli-0.6.0/tonos-cli"
+    dest: "{{ ton_node_path }}/tools/tonos-cli"
+    remote_src: yes
+    owner: "{{ ton_user }}"
+    group: "{{ ton_user }}"
+    mode: "0755"
+
+# Add approve script
+- name: Install check_smart
+  copy:
+    src: "check_smart.sh"
+    dest: "{{ ton_node_path }}/tools/check_smart.sh"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "0755"
+
+# Add cronjob
+- name: Cronjob for check_smart script
+  cron:
+    name: "check_smart script"
+    minute: "*/20"
+    cron_file: ton_check_smart
+    user: "{{ton_user}}"
+    job: "{{ ton_node_path }}/tools/check_smart.sh >> {{log_path}}/check_transaction.log 2>&1"
