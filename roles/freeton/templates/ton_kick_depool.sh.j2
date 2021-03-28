@@ -3,12 +3,12 @@ set -e
 
 export TON_NETWORK=$(cat /etc/ton/ton_network.txt)
 
-ELECTION_ID=$({{ton_node_path}}/tools/tonos-cli --url $TON_NETWORK runget -1:3333333333333333333333333333333333333333333333333333333333333333 active_election_id | grep -i 'result:' | awk -F'[][]' '{print $2}' | sed 's/"//g')
+ELECTION_ID=$(/usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK run -1:3333333333333333333333333333333333333333333333333333333333333333 active_election_id {} --abi /etc/ton/configs/Elector.abi.json | grep -i 'value0' | cut -d '"' -f4)
 
-KICK_START=$(cat /etc/ton/configs/kick_start.addr)
-KICK_START_KEY="/etc/ton/configs/keys/kick_start.key.json"
-MULTISIG=$(cat /etc/ton/configs/$HOSTNAME.addr)
-DEPOOL=$(cat /etc/ton/configs/depool.addr)
+KICK_START=$(cat /etc/ton/keys/kick.addr)
+KICK_START_KEY="/etc/ton/keys/kick_start.key.json"
+MULTISIG=$(cat /etc/ton/keys/$HOSTNAME.addr)
+DEPOOL=$(cat /etc/ton/keys/depool.addr)
 COUNT=0
 
 if

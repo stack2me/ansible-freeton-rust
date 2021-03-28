@@ -3,7 +3,7 @@
 ton_user: ton
 ton_group: ton
 ton_node_path: /usr/local/sbin/ton
-ton_network: gql.custler.net
+ton_network: rustnet.ton.dev
 network_type: main # possible values: net | main | rust
 log_path: /var/log/ton
 
@@ -29,7 +29,7 @@ telegram_chat_id: "-4XXXXXXXXX"
 telegram_bot_token: "1XXXXXXXXXXXXXXXXXXXXXX"
 
 #rust
-rust_version: 1.49.0
+rust_version: 1.50.0
 
 #promtail
 promtail_config_scrape_configs:
