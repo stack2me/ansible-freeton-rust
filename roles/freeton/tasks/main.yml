@@ -271,6 +271,16 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "644"
+    when: not PD_ENABLE
+
+- name: Create kicker_depool_pd
+  template:
+    src: ton_kick_depool_pd.sh.j2
+    dest: "{{ ton_node_path }}/tools/ton_kick_depool.sh"
+    owner: "{{ ton_user }}"
+    group: "{{ ton_group }}"
+    mode: "644"
+    when: PD_ENABLE
 
 # Add cronjob
 - name: Cronjob for validator script

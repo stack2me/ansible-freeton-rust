@@ -40,3 +40,9 @@ promtail_config_scrape_configs:
         labels:
           job: varlogs
           __path__: /var/log/ton/*log
+
+#PagerDuty
+PD_ENABLE: false
+PD_ACCOUNT: pd_manager_api@gmail.com
+PD_SERVICE: PY000
+PD_TOKEN: S0meToken
