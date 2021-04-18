@@ -42,7 +42,7 @@ promtail_config_scrape_configs:
           __path__: /var/log/ton/*log
 
 #PagerDuty
-PD_ENABLE: false
-PD_ACCOUNT: pd_manager_api@gmail.com
-PD_SERVICE: PY000
-PD_TOKEN: S0meToken
+pd_enable: false
+pd_account: pd_manager_api@gmail.com
+pd_service: PY000
+pd_token: S0meToken

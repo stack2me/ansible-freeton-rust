@@ -271,7 +271,7 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "644"
-    when: not PD_ENABLE
+  when: not pd_enable
 
 - name: Create kicker_depool_pd
   template:
@@ -280,7 +280,7 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "644"
-    when: PD_ENABLE
+  when: pd_enable | bool
 
 # Add cronjob
 - name: Cronjob for validator script

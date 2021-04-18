@@ -44,12 +44,12 @@ if [ "$COUNT" == 0 ]; then
     TR=$(/usr/local/sbin/ton/tools/tonos-cli --url $TON_NETWORK run $MULTISIG getTransactions {} --abi /etc/ton/ton-labs-contracts/solidity/safemultisig/SafeMultisigWallet.abi.json | grep id | awk '{print $2}' | cut -d '"' -f2)
     if [ -z "$TR" ]; then
         /usr/local/sbin/telegram_notifier.sh "ERROR on elections, check server!"
-        curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/vnd.pagerduty+json;version=2' --header 'From: {{ PD_ACCOUNT }}' --header 'Authorization: Token token={{ PD_TOKEN}}' -d '{
+        curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/vnd.pagerduty+json;version=2' --header 'From: {{ pd_account }}' --header 'Authorization: Token token={{ pd_token}}' -d '{
         "incident": {
             "type": "incident",
             "title": "Error in elections!",
             "service": {
-            "id": "{{ PD_SERVICE }}",
+            "id": "{{ pd_service }}",
             "type": "service_reference",
             "details": "No transaction to sumbit after validator script!"
             }
