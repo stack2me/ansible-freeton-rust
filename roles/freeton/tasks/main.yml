@@ -139,26 +139,26 @@
 - name: Download tonos-cli binary
   become: no
   get_url:
-    url: "https://github.com/tonlabs/tonos-cli/archive/v0.6.0.tar.gz" # needs variable!!!!!!!!1
-    dest: "/tmp/v0.6.0.tar.gz"
+    # url: "https://github.com/tonlabs/tonos-cli/archive/v{{ tonos_cli_version }}.tar.gz"
+    url: https://github.com/tonlabs/tonos-cli/archive/refs/tags/{{ tonos_cli_version }}.tar.gz
+    dest: "/tmp/{{ tonos_cli_version }}.tar.gz"
 
 - name: Unarchive tonos-cli
   become: no
   unarchive:
-    src: "/tmp/v0.6.0.tar.gz" # needs variable!!!!!!!!1
+    src: "/tmp/v{{ tonos_cli_version }}.tar.gz"
     dest: "/tmp"
     remote_src: yes
 
 - name: Copy file with owner and permissions
   copy:
-    src: "/tmp/tonos-cli-0.6.0/tonos-cli" # needs variable!!!!!!!!1
+    src: "/tmp/tonos-cli-{{ tonos_cli_version }}/tonos-cli"
     dest: "{{ ton_node_path }}/tools/tonos-cli"
     remote_src: yes
     owner: "{{ ton_user }}"
     group: "{{ ton_user }}"
     mode: "0755"
 
-# ============================ Temporaty disable
 # Pull repository
 - name: Pull rust node
   git:
@@ -232,8 +232,6 @@
     owner: "{{ ton_user }}"
     group: "{{ ton_group }}"
     mode: "0755"
-
-# =================================
 
 # Check key directory for avoid recreate
 - name: Check console config

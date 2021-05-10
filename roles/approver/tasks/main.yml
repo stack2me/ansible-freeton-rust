@@ -75,19 +75,19 @@
 - name: Download tonos-cli binary
   become: no
   get_url:
-    url: "https://github.com/tonlabs/tonos-cli/archive/v0.6.0.tar.gz"
-    dest: "/tmp/v0.6.0.tar.gz"
+    url: "https://github.com/tonlabs/tonos-cli/archive/v{{ tonos_cli_version }}.tar.gz"
+    dest: "/tmp/v{{ tonos_cli_version }}.tar.gz"
 
 - name: Unarchive tonos-cli
   become: no
   unarchive:
-    src: "/tmp/v0.6.0.tar.gz"
+    src: "/tmp/v{{ tonos_cli_version }}.tar.gz"
     dest: "/tmp"
     remote_src: yes
 
 - name: Copy file with owner and permissions
   copy:
-    src: "/tmp/tonos-cli-0.6.0/tonos-cli"
+    src: "/tmp/tonos-cli-{{ tonos_cli_version }}/tonos-cli"
     dest: "{{ ton_node_path }}/tools/tonos-cli"
     remote_src: yes
     owner: "{{ ton_user }}"
