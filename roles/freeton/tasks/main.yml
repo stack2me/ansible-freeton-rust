@@ -89,6 +89,7 @@
     # url: https://raw.githubusercontent.com/FreeTON-Network/fld.ton.dev/main/configs/fld.ton.dev/ton-global.config.json #fld.ton.dev
     url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/configs/ton-global.config.json" # network hardcoded improve when we reach stale !!!!! rustnet.ton.dev
     dest: "/etc/ton/configs/ton-global.config.json"
+  tags: upgrade_freeton_configs
 
 # Pull network default configs
 - name: Pull default network configs
@@ -96,6 +97,7 @@
   get_url:
     url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/default_config.json" # network hardcoded improve when we reach stale !!!!!
     dest: "/etc/ton/configs/default_config.json_origin"
+  tags: upgrade_freeton_configs
 
 - name: Patch default config
   become_user: "{{ ton_user }}"
@@ -109,12 +111,14 @@
   get_url:
     url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/Elector.abi.json" # network hardcoded improve when we reach stale !!!!!
     dest: "/etc/ton/configs/Elector.abi.json"
+  tags: upgrade_freeton_configs
 
 - name: Pull Elector.abi.json
   become_user: "{{ ton_user }}"
   get_url:
     url: "https://raw.githubusercontent.com/tonlabs/rustnet.ton.dev/main/docker-compose/ton-node/configs/console_template.json" # network hardcoded improve when we reach stale !!!!!
     dest: "/etc/ton/configs/console_template.json"
+  tags: upgrade_freeton_configs
 
 # Add logrotate
 - name: Create log config
@@ -128,6 +132,7 @@
   git:
     repo: "https://github.com/tonlabs/ton-labs-contracts.git"
     dest: "/etc/ton/ton-labs-contracts"
+  tags: upgrade_contracts
 
 - name: Own tonuser
   file:
@@ -288,3 +293,14 @@
     cron_file: ton_validator
     user: "{{ton_user}}"
     job: "{{ ton_node_path }}/tools/ton_kick_depool.sh >> {{log_path}}/validator.log"
+
+- name: Enable service ton, and not touch the state
+  service:
+    name: ton
+    enabled: yes
+
+- name: Restart ton service
+  service:
+    name: ton
+    state: restarted
+  tags: upgrade_freeton_configs
