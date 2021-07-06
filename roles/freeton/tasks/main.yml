@@ -132,6 +132,7 @@
   git:
     repo: "https://github.com/tonlabs/ton-labs-contracts.git"
     dest: "/etc/ton/ton-labs-contracts"
+    version: "RUSTCUP_DEPOOL_--_DO_NOT_DEPLOY_ON_MAINNET" #!!!! Temporary branchname
   tags: upgrade_contracts
 
 - name: Own tonuser
